@@ -111,6 +111,15 @@ def cleanup_temp_file(file_path: str):
     except Exception as e:
         logger.warning(f"Failed to cleanup temp file {file_path}: {str(e)}")
 
+def strip_markdown_code_block(code: str) -> str:
+    """Strips markdown code block syntax from a string."""
+    # Regex to match code blocks: ```[language]\n[code]\n```
+    # It's non-greedy (.*?) to match only up to the next ```
+    match = re.search(r'```(?:\w+)?\n(.*?)\n```', code, re.DOTALL)
+    if match:
+        return match.group(1).strip()
+    return code.strip()
+
 def extract_filename_from_code(code, language):
     """Extract appropriate filename from code based on language-specific patterns."""
     
@@ -338,6 +347,7 @@ async def check_judge0_availability():
         return False
 
 async def execute_code_judge0(code, language, user_input="", custom_filename=None):
+    code = strip_markdown_code_block(code)
     """Execute code using Judge0 with proper Java class name transformation."""
     if not judge0_available:
         return {"output": "Judge0 not available. Please check configuration.", "success": False}
@@ -641,6 +651,9 @@ Write ONLY the code, no explanations outside the code. Include helpful comments 
         ]
         
         generated_code = await call_groq(messages, temperature=0.2)
+        # Apply specific stripping for code-generation mode if requested
+        if request.mode == "code-generation":
+            generated_code = strip_markdown_code_block(generated_code)
         clean_code = clean_code_response(generated_code, request.language)
         
         # Get the filename that would be used for this code
