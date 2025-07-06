@@ -1,9 +1,0 @@
-services:
-  - type: static
-    name: codemaster-frontend
-    buildCommand: "npm install && npm run build"
-    staticPublishPath: build
-    rootDir: frontend
-    envVars:
-      - key: REACT_APP_PUBLIC_BACKEND_URL
-        sync: false
